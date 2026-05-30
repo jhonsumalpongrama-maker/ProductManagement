@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProdMan — Product Manager</title>
+  <link rel="stylesheet" href="assets/css/style.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════ -->
+<header class="hdr">
+  <a class="logo" href="#">
+    ProdMan
+    <span class="logo-badge">CRUD</span>
+  </a>
+  <button class="btn-add" onclick="openAdd()">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Add Product
+  </button>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     TOOLBAR  — search + category filter
+════════════════════════════════════════════ -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/>
+      <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input id="searchInput" class="search-input" type="text" placeholder="Search products…"/>
+  </div>
+  <div class="pills" id="catPills"></div>
+</div>
+
+<!-- COUNT + CLEAR -->
+<div class="sumbar">
+  <span class="sumbar-ct" id="sumCt">Loading…</span>
+  <button class="clr-btn" id="clrBtn" onclick="clearFilters()" style="display:none">Clear filters</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRODUCT GRID
+════════════════════════════════════════════ -->
+<div class="grid" id="grid">
+  <div class="state"><div class="spinner"></div></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     FORM MODAL  — Add / Edit
+════════════════════════════════════════════ -->
+<div class="ov" id="formOv">
+  <div class="modal">
+
+    <div class="mhdr">
+      <div class="micon add" id="micon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M12 4v16m8-8H4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="mtitle" id="mtitle">Add Product</div>
+        <div class="msub">Fill in the details below</div>
+      </div>
+      <button class="mclose" onclick="closeForm()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="mbody">
+
+      <!-- IMAGE UPLOAD -->
+      <div class="fg">
+        <label class="fl">Product Image <span class="opt">(optional)</span></label>
+
+        <div class="upload-zone" id="uploadZone">
+          <!-- Hidden file input — covers the whole zone -->
+          <input
+            type="file"
+            id="imgFile"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onchange="onFileSelected(this)"
+          />
+
+          <!-- Preview — shown after pick -->
+          <img id="imgPreview" alt="Preview"/>
+
+          <!-- Placeholder UI — hidden when image selected -->
+          <div class="upload-ph" id="uploadPh">
+            <div class="upload-ph-icon">
+              <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+              </svg>
+            </div>
+            <p class="upload-ph-title">Upload a photo</p>
+            <p class="upload-ph-sub">
+              <strong>Click to browse</strong> or drag &amp; drop your image here<br/>
+              JPG · PNG · GIF · WEBP &mdash; max 5 MB
+            </p>
+          </div>
+        </div>
+
+        <!-- Remove bar shown below when image is loaded -->
+        <div class="img-remove-bar" id="imgRemoveBar">
+          <span id="imgName"></span>
+          <button type="button" class="img-remove-btn" onclick="clearImage()">✕ Remove</button>
+        </div>
+
+        <!-- Hidden: stores URL of existing image when editing -->
+        <input type="hidden" id="fImgUrl"/>
+      </div>
+
+      <!-- NAME -->
+      <div class="fg">
+        <label class="fl" for="fName">Product Name *</label>
+        <input class="fi" id="fName" type="text" placeholder="e.g. iPhone 15 Pro"/>
+        <div class="ferr" id="eName"></div>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div class="fg">
+        <label class="fl" for="fDesc">Description *</label>
+        <textarea class="fta" id="fDesc" placeholder="Short product description…"></textarea>
+        <div class="ferr" id="eDesc"></div>
+      </div>
+
+      <!-- PRICE + STOCK -->
+      <div class="frow">
+        <div class="fg">
+          <label class="fl" for="fPrice">Price (₱) *</label>
+          <input class="fi" id="fPrice" type="number" min="0" step="0.01" placeholder="0.00"/>
+          <div class="ferr" id="ePrice"></div>
+        </div>
+        <div class="fg">
+          <label class="fl" for="fStock">Stock *</label>
+          <input class="fi" id="fStock" type="number" min="0" step="1" placeholder="0"/>
+          <div class="ferr" id="eStock"></div>
+        </div>
+      </div>
+
+      <!-- CATEGORY -->
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl" for="fCat">Category *</label>
+        <select class="fs" id="fCat">
+          <option value="">— Select category —</option>
+          <option>Electronics</option>
+          <option>Footwear</option>
+          <option>Accessories</option>
+          <option>Appliances</option>
+          <option>Clothing</option>
+          <option>Food</option>
+          <option>Other</option>
+        </select>
+        <div class="ferr" id="eCat"></div>
+      </div>
+
+    </div><!-- /mbody -->
+
+    <div class="mfoot">
+      <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+      <button class="btn-save" id="btnSave" onclick="submitForm()">Add Product</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     DETAIL MODAL
+════════════════════════════════════════════ -->
+<div class="ov" id="detOv">
+  <div class="modal">
+
+    <div class="mhdr">
+      <div class="micon edit">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path stroke-linecap="round" d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>
+        </svg>
+      </div>
+      <div class="mtitle">Product Details</div>
+      <button class="mclose" onclick="closeDet()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="mbody" id="detBody"></div>
+
+    <div class="mfoot">
+      <button class="btn-cancel" onclick="closeDet()">Close</button>
+      <button class="btn-save" id="detEdit">Edit Product</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     CONFIRM DELETE MODAL
+════════════════════════════════════════════ -->
+<div class="ov" id="confOv">
+  <div class="modal confirm-modal">
+    <div class="cbody">
+      <div class="cicon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </div>
+      <h3 class="ctitle">Delete Product?</h3>
+      <p class="ctxt" id="confTxt"></p>
+    </div>
+    <div class="mfoot">
+      <button class="btn-cancel" onclick="closeConf()">Cancel</button>
+      <button class="btn-danger" id="btnDel">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     TOAST NOTIFICATIONS
+════════════════════════════════════════════ -->
+<div class="toasts" id="toasts"></div>
+
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
